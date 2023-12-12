@@ -73,16 +73,7 @@ def find_favorite(array_of_hash_objects)
   # TIP: there will only be a maximum of one hash in the array that will
   # return true to the :is_my_favorite? key
 
-  favorites = []
-  array_of_hash_objects.each do |x|
-    favorites << x.select { |k, v| x[:is_my_favorite?] == true }  
-  end
+  array_of_hash_objects.find { |k| k[:is_my_favorite?] == true }
 
-
-  favorites.delete({})
-  favorites[0]
-
-
-  
 
 end
