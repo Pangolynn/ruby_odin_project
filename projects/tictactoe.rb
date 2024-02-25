@@ -1,4 +1,6 @@
-# This class represents the game logic for Tic Tac Toe 
+# frozen_string_literal: true
+
+# This class represents the game logic for Tic Tac Toe
 #
 # To play a game, create a new instance of TicTacToe with 2 Player objects
 # and a board.
@@ -27,9 +29,9 @@ class Tictactoe
 
   def setup
     puts "\nEnter player 1's name"
-    @players[0] = Player.new(Tictactoe.input_player_name)
+    @players[0] = HumanPlayer.new(Tictactoe.input_player_name)
     puts "\nEnter player 2's name"
-    @players[1] = Player.new(Tictactoe.input_player_name)
+    @players[1] = ComputerPlayer.new(Tictactoe.input_player_name)
     @board.print_board
     determine_symbol
   end
@@ -39,15 +41,15 @@ class Tictactoe
 
     if @player_turn == 1
       puts "Player 1 #{@players[0].name}'s turn."
-      move = @players[0].move until @board.valid_move?(move)
-      @board.update_board(move,@players[0].sym)
+      move = @players[0].move(board) until @board.valid_move?(move)
+      @board.update_board(move, @players[0].sym)
       @players[0].choices.push(move)
       @turns += 1
       @board.print_board
       @board.winner?(@players[0].choices) ? (puts "#{@players[0].name} wins! Play Again?"; @game_over = true) : @player_turn = 2
     else
       puts "Player 2 #{@players[1].name}'s turn."
-      move = @players[1].move until @board.valid_move?(move)
+      move = @players[1].move(board) until @board.valid_move?(move)
       @board.update_board(move, @players[1].sym)
       @players[1].choices.push(move)
       @turns += 1
@@ -78,6 +80,7 @@ end
 # Example usage:
 #   board = Board.new
 class Board
+  attr_reader :board
   def initialize
     @board = Array.new(9, '*')
   end
@@ -122,10 +125,13 @@ end
 # This class represents a Player for the Tic tac toe game
 #
 # Players have name, sym (X or O), and choices (moves they've previously made) attributes
-# To create a player, pass in a name, and then you can seperately update their symbol.
+# To create a player use one of the subclasses HumanPlayer or ComputerPlayer
+# pass in a name, and then you can seperately update their symbol.
 # Example usage:
-#   player_one = Player.new("Sam")
+#   player_one = HumanPlayer.new("Sam")
 #   player_one.sym = "X"
+#   player_two = ComputerPlayer.new("Computer")
+#   player_two.sym = "O"
 class Player
   attr_accessor :name, :choices, :sym
 
@@ -136,11 +142,41 @@ class Player
   end
 
   def move
+    raise NotImplementedError 'This method must be implemented in subclass.'
+  end
+end
+
+# Class HumanPlayer represents a human version of a player for TicTacToe
+# You can choose to have either Human players or Computer players for the game.
+# HumanPlayer inherits name, symb, and choices attributes
+# You can make a #move with a HumanPlayer
+# Example Usage:
+#   p1 = HumanPlayer.new("Sam")
+#   p1.move
+class HumanPlayer < Player
+  def move(board)
     input = gets.strip.chomp
-    return input.to_i if input.match?(/\A[0-8]\z/)
+    return input.to_i if input.match?(/\A[0-8]\z/) && board.board[input.to_i] == '*'
 
     puts 'Invalid input.'
     -1
+  end
+end
+
+# Class ComputerPlayer represents an AI version of a player for TicTacToe
+# You can choose to have either Human players or Computer players for the game.
+# ComputerPlayer inherits name, symb, and choices attributes
+# You can make a #move with a ComputerPlayer
+# Example Usage:
+#   p2 = ComputerPlayer.new("Computer")
+#   p2.move
+class ComputerPlayer < Player
+  def move(board)
+    possible_moves = []
+    board.board.each_with_index do |element, index|
+      possible_moves << index if element.include?('*')
+    end
+    possible_moves.sample
   end
 end
 
@@ -148,7 +184,7 @@ end
 # Its purpose is to start a new tictactoe game and replay based on user input
 # Example usage:
 #   Game.start
-module Game 
+module Game
   def self.replay?
     response = ''
     response = gets.strip.chomp while response.empty?
